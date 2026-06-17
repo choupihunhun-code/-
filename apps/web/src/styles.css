@@ -92,6 +92,70 @@
     @apply fixed inset-0 z-50 grid place-items-center bg-slate-950/45 p-4 backdrop-blur-[2px];
   }
 
+  .drawer-backdrop {
+    @apply fixed inset-0 z-40 bg-slate-900/35 backdrop-blur-[1px];
+  }
+
+  .drawer-panel {
+    @apply absolute right-0 top-0 flex h-full w-[min(460px,calc(100vw-24px))] flex-col border-l border-[#e6eafe] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.2)];
+  }
+
+  .drawer-head {
+    @apply flex items-start justify-between gap-4 border-b border-[#edf0fb] px-5 py-5;
+  }
+
+  .drawer-head h3 {
+    @apply m-0 text-[18px] font-extrabold leading-none text-[#15213a];
+  }
+
+  .drawer-head p {
+    @apply m-0 mt-2 text-sm leading-6 text-[#73809a];
+  }
+
+  .drawer-close {
+    @apply grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-[#e6eafe] bg-white text-[#15213a];
+  }
+
+  .drawer-list {
+    @apply grid gap-3 overflow-y-auto px-4 py-4;
+  }
+
+  .drawer-card {
+    @apply grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-[16px] border border-[#e6eafe] bg-[#fbfcff] px-4 py-4;
+  }
+
+  .drawer-main strong {
+    @apply block text-[15px] leading-snug text-[#15213a];
+  }
+
+  .drawer-main p {
+    @apply m-0 mt-1 text-[13px] text-[#73809a];
+  }
+
+  .drawer-badge {
+    @apply inline-flex min-h-7 items-center rounded-full px-3 text-xs font-bold not-italic;
+  }
+
+  .drawer-badge.amber {
+    @apply bg-[#fff4dc] text-[#e87905];
+  }
+
+  .drawer-badge.green {
+    @apply bg-[#eafbf0] text-green-600;
+  }
+
+  .drawer-action {
+    @apply inline-flex h-11 items-center justify-center rounded-xl border border-[#d9e0fb] bg-white px-4 text-sm font-semibold text-[#15213a];
+  }
+
+  .drawer-note {
+    @apply mx-4 rounded-[14px] border border-[#d9e1ff] bg-[#eef3ff] px-4 py-3 text-sm leading-6 text-[#5b55ff];
+  }
+
+  .drawer-foot {
+    @apply mt-auto flex items-center justify-end gap-3 border-t border-[#edf0fb] bg-white px-5 py-4;
+  }
+
   .login-modal {
     @apply flex max-h-[86vh] w-[min(460px,calc(100vw-28px))] flex-col overflow-hidden rounded-2xl bg-white shadow-[0_28px_80px_rgba(15,23,42,0.35)];
   }

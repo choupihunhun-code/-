@@ -44,6 +44,15 @@ type RouteMeta = {
   breadcrumbs: BreadcrumbItem[];
 };
 
+type PendingWorkItem = {
+  title: string;
+  detail: string;
+  badge: string;
+  tone: "amber" | "green";
+  action: string;
+  target: Screen;
+};
+
 const assignments: Assignment[] = [
   { title: "课程论文：现代大学教育中的阅读与表达", course: "大学语文 2026 春 A 班", status: "批阅中", submitted: 145, total: 168, pending: 38, aiDone: 145, due: "06-20 20:00" },
   { title: "实验报告：观察与记录", course: "实验心理学 2 班", status: "批阅中", submitted: 47, total: 64, pending: 19, aiDone: 41, due: "今晚 23:00" },
@@ -88,6 +97,33 @@ const routeMeta: Record<Screen, RouteMeta> = {
   review: { path: "/assignments/course-paper/review", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "作业管理", target: "assignment-management" }, { label: "课程论文", target: "assignment-detail" }, { label: "批阅工作台" }] },
 };
 
+const pendingWorkItems: PendingWorkItem[] = [
+  {
+    title: "大学语文 2026 春 A 班 / 课程论文",
+    detail: "145 已提交 · 38 待复核 · 7 份 AI 失败",
+    badge: "38 待处理",
+    tone: "amber",
+    action: "进入批阅",
+    target: "review",
+  },
+  {
+    title: "实验心理学 2 班 / 实验报告 03",
+    detail: "47 已提交 · 19 待复核 · 7 份 AI 失败",
+    badge: "19 待处理",
+    tone: "amber",
+    action: "进入批阅",
+    target: "review",
+  },
+  {
+    title: "专业导论 / 课程小论文",
+    detail: "86 已提交 · 0 待复核",
+    badge: "0 待处理",
+    tone: "green",
+    action: "查看结果",
+    target: "assignment-detail",
+  },
+];
+
 const pathToScreen = Object.fromEntries(
   Object.entries(routeMeta).map(([screen, meta]) => [meta.path, screen]),
 ) as Record<string, Screen>;
@@ -101,6 +137,7 @@ function App() {
   const [screen, setScreen] = useState<Screen>(() => screenFromPath());
   const [loginOpen, setLoginOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [pendingDrawerOpen, setPendingDrawerOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const current = screenMeta[screen];
   const route = routeMeta[screen];
@@ -195,7 +232,7 @@ function App() {
             </div>
           </div>
 
-          {screen === "dashboard" && <DashboardScreen totals={totals} go={navigate} />}
+          {screen === "dashboard" && <DashboardScreen totals={totals} go={navigate} openPendingDrawer={() => setPendingDrawerOpen(true)} />}
           {screen === "classes" && <ClassesScreen go={navigate} />}
           {screen === "course-detail" && <CourseDetailScreen go={navigate} />}
           {screen === "assignment-management" && <AssignmentManagementScreen go={navigate} />}
@@ -205,6 +242,17 @@ function App() {
           {screen === "review" && <ReviewScreen go={navigate} />}
         </main>
       </div>
+
+      {pendingDrawerOpen && (
+        <PendingWorkDrawer
+          items={pendingWorkItems}
+          onClose={() => setPendingDrawerOpen(false)}
+          go={(next) => {
+            setPendingDrawerOpen(false);
+            navigate(next);
+          }}
+        />
+      )}
 
       {loginOpen && <LoginModal onClose={() => setLoginOpen(false)} onLogin={completeLogin} />}
     </div>
@@ -322,13 +370,21 @@ function InfoLine({ label, value }: { label: string; value: string }) {
   );
 }
 
-function DashboardScreen({ totals, go }: { totals: { pending: number; unsubmitted: number; active: number; drafts: number }; go: (screen: Screen) => void }) {
+function DashboardScreen({
+  totals,
+  go,
+  openPendingDrawer,
+}: {
+  totals: { pending: number; unsubmitted: number; active: number; drafts: number };
+  go: (screen: Screen) => void;
+  openPendingDrawer: () => void;
+}) {
   return (
     <>
       <section className="metric-grid">
         <Metric label="待教师复核" value={totals.pending} pill="所有作业" tone="amber" onClick={() => go("review")} />
         <Metric label="未提交学生" value={totals.unsubmitted} pill="所有作业" tone="red" onClick={() => go("assignment-detail")} />
-        <Metric label="待处理作业" value={totals.active} pill="需处理" tone="green" onClick={() => go("assignment-management")} />
+        <Metric label="待处理作业" value={totals.active} pill="需处理" tone="green" onClick={openPendingDrawer} />
         <Metric label="待发布作业" value={totals.drafts} pill="常用" tone="purple" highlight onClick={() => go("assignment-create")} />
       </section>
       <section className="dashboard-grid">
@@ -572,6 +628,60 @@ function ReviewScreen({ go }: { go: (screen: Screen) => void }) {
         </div>
       </aside>
     </section>
+  );
+}
+
+function PendingWorkDrawer({
+  items,
+  onClose,
+  go,
+}: {
+  items: PendingWorkItem[];
+  onClose: () => void;
+  go: (screen: Screen) => void;
+}) {
+  return (
+    <div className="drawer-backdrop" role="presentation" onClick={onClose}>
+      <aside className="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="pending-work-title" onClick={(event) => event.stopPropagation()}>
+        <header className="drawer-head">
+          <div>
+            <h3 id="pending-work-title">待处理作业</h3>
+            <p>共 3 个课程作业进入当前处理队列，按待复核和 AI 状态汇总。</p>
+          </div>
+          <button className="drawer-close" onClick={onClose} aria-label="关闭待处理作业弹窗">
+            <X size={16} />
+          </button>
+        </header>
+
+        <div className="drawer-list">
+          {items.map((item) => (
+            <article key={item.title} className="drawer-card">
+              <div className="drawer-main">
+                <strong>{item.title}</strong>
+                <p>{item.detail}</p>
+              </div>
+              <div className={`drawer-badge ${item.tone}`}>• {item.badge}</div>
+              <button className="drawer-action" onClick={() => go(item.target)}>
+                {item.action}
+              </button>
+            </article>
+          ))}
+        </div>
+
+        <div className="drawer-note">
+          这里展示的是首页“待处理作业”的来源明细。完整课程班和学生名单管理在“课程班”页面完成。
+        </div>
+
+        <footer className="drawer-foot">
+          <button className="outline-action" onClick={onClose}>
+            关闭
+          </button>
+          <button className="solid-action" onClick={() => go("review")}>
+            进入批阅工作台
+          </button>
+        </footer>
+      </aside>
+    </div>
   );
 }
 
