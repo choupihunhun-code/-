@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   BookOpen,
@@ -40,6 +40,16 @@ type Assignment = {
   due: string;
 };
 
+type BreadcrumbItem = {
+  label: string;
+  target?: Screen;
+};
+
+type RouteMeta = {
+  path: string;
+  breadcrumbs: BreadcrumbItem[];
+};
+
 const assignments: Assignment[] = [
   { title: "课程论文：现代大学教育中的阅读与表达", course: "大学语文 2026 春 A 班", status: "批阅中", submitted: 145, total: 168, pending: 38, aiDone: 145, due: "06-20 20:00" },
   { title: "实验报告：观察与记录", course: "实验心理学 2 班", status: "批阅中", submitted: 47, total: 64, pending: 19, aiDone: 41, due: "今晚 23:00" },
@@ -78,18 +88,55 @@ const screenMeta: Record<Screen, { title: string; desc: string }> = {
   "student-result": { title: "学生查看结果", desc: "学生只能查看教师发布后的最终分数和教师评语。" },
 };
 
+const routeMeta: Record<Screen, RouteMeta> = {
+  dashboard: { path: "/", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "工作台" }] },
+  classes: { path: "/classes", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "班级管理" }] },
+  "course-detail": { path: "/classes/chinese-a", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "班级管理", target: "classes" }, { label: "大学语文 2026 春 A 班" }] },
+  "assignment-management": { path: "/assignments", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "作业管理" }] },
+  "grade-management": { path: "/grades", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "成绩管理" }] },
+  "assignment-create": { path: "/assignments/new", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "作业管理", target: "assignment-management" }, { label: "发布作业" }] },
+  "assignment-detail": { path: "/assignments/course-paper", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "作业管理", target: "assignment-management" }, { label: "课程论文" }] },
+  review: { path: "/assignments/course-paper/review", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "作业管理", target: "assignment-management" }, { label: "课程论文", target: "assignment-detail" }, { label: "批阅工作台" }] },
+  "student-entry": { path: "/student", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "学生端入口" }] },
+  "student-assignments": { path: "/student/assignments", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "学生端入口", target: "student-entry" }, { label: "我的作业" }] },
+  "student-assignment-detail": { path: "/student/assignments/course-paper", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "学生端入口", target: "student-entry" }, { label: "我的作业", target: "student-assignments" }, { label: "作业详情" }] },
+  "student-submit-success": { path: "/student/assignments/course-paper/submitted", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "学生端入口", target: "student-entry" }, { label: "我的作业", target: "student-assignments" }, { label: "提交成功" }] },
+  "student-result": { path: "/student/assignments/course-paper/result", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "学生端入口", target: "student-entry" }, { label: "我的作业", target: "student-assignments" }, { label: "批阅结果" }] },
+};
+
+const pathToScreen = Object.fromEntries(
+  Object.entries(routeMeta).map(([screen, meta]) => [meta.path, screen]),
+) as Record<string, Screen>;
+
+function screenFromPath(): Screen {
+  const hashPath = window.location.hash.replace(/^#/, "") || "/";
+  return pathToScreen[hashPath] ?? "dashboard";
+}
+
 function App() {
-  const [screen, setScreen] = useState<Screen>("dashboard");
+  const [screen, setScreen] = useState<Screen>(() => screenFromPath());
   const [loginOpen, setLoginOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const current = screenMeta[screen];
+  const route = routeMeta[screen];
   const totals = useMemo(() => ({
     pending: assignments.reduce((sum, item) => sum + item.pending, 0),
     unsubmitted: assignments.reduce((sum, item) => sum + Math.max(item.total - item.submitted, 0), 0),
     active: assignments.filter((item) => item.status === "批阅中").length,
     drafts: assignments.filter((item) => item.status === "草稿").length,
   }), []);
+
+  const navigate = (next: Screen) => {
+    setScreen(next);
+    window.history.replaceState(null, "", `#${routeMeta[next].path}`);
+  };
+
+  useEffect(() => {
+    const syncFromHash = () => setScreen(screenFromPath());
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, []);
 
   const openAccount = () => {
     if (!loggedIn) {
@@ -108,7 +155,7 @@ function App() {
   return (
     <div className="desktop-frame">
       <header className="top-header">
-        <button className="brand-button" onClick={() => setScreen("dashboard")}>
+        <button className="brand-button" onClick={() => navigate("dashboard")}>
           <h1>教师端教务系统</h1>
           <p>AI 初评 · 教师复核 · 成绩归档</p>
         </button>
@@ -143,7 +190,7 @@ function App() {
                   <button
                     className={screen === item.screen ? "active" : ""}
                     key={item.screen}
-                    onClick={() => setScreen(item.screen)}
+                    onClick={() => navigate(item.screen)}
                   >
                     <Icon size={15} />
                     <span>{item.label}</span>
@@ -156,6 +203,7 @@ function App() {
         </aside>
 
         <main className="dashboard">
+          <Breadcrumbs items={route.breadcrumbs} go={navigate} />
           <div className="page-heading">
             <div>
               <h2>{current.title}</h2>
@@ -163,24 +211,40 @@ function App() {
             </div>
           </div>
 
-          {screen === "dashboard" && <DashboardScreen totals={totals} go={setScreen} />}
-          {screen === "classes" && <ClassesScreen go={setScreen} />}
-          {screen === "course-detail" && <CourseDetailScreen go={setScreen} />}
-          {screen === "assignment-management" && <AssignmentManagementScreen go={setScreen} />}
-          {screen === "grade-management" && <GradeManagementScreen go={setScreen} />}
-          {screen === "assignment-create" && <AssignmentCreateScreen go={setScreen} />}
-          {screen === "assignment-detail" && <AssignmentDetailScreen go={setScreen} />}
-          {screen === "review" && <ReviewScreen go={setScreen} />}
-          {screen === "student-entry" && <StudentEntryScreen go={setScreen} />}
-          {screen === "student-assignments" && <StudentAssignmentsScreen go={setScreen} />}
-          {screen === "student-assignment-detail" && <StudentAssignmentDetailScreen go={setScreen} />}
-          {screen === "student-submit-success" && <StudentSubmitSuccessScreen go={setScreen} />}
-          {screen === "student-result" && <StudentResultScreen go={setScreen} />}
+          {screen === "dashboard" && <DashboardScreen totals={totals} go={navigate} />}
+          {screen === "classes" && <ClassesScreen go={navigate} />}
+          {screen === "course-detail" && <CourseDetailScreen go={navigate} />}
+          {screen === "assignment-management" && <AssignmentManagementScreen go={navigate} />}
+          {screen === "grade-management" && <GradeManagementScreen go={navigate} />}
+          {screen === "assignment-create" && <AssignmentCreateScreen go={navigate} />}
+          {screen === "assignment-detail" && <AssignmentDetailScreen go={navigate} />}
+          {screen === "review" && <ReviewScreen go={navigate} />}
+          {screen === "student-entry" && <StudentEntryScreen go={navigate} />}
+          {screen === "student-assignments" && <StudentAssignmentsScreen go={navigate} />}
+          {screen === "student-assignment-detail" && <StudentAssignmentDetailScreen go={navigate} />}
+          {screen === "student-submit-success" && <StudentSubmitSuccessScreen go={navigate} />}
+          {screen === "student-result" && <StudentResultScreen go={navigate} />}
         </main>
       </div>
 
       {loginOpen && <LoginModal onClose={() => setLoginOpen(false)} onLogin={completeLogin} />}
     </div>
+  );
+}
+
+function Breadcrumbs({ items, go }: { items: BreadcrumbItem[]; go: (screen: Screen) => void }) {
+  return (
+    <nav className="breadcrumbs" aria-label="面包屑导航">
+      {items.map((item, index) => (
+        <span key={`${item.label}-${index}`} className="breadcrumbs-item">
+          {item.target ? (
+            <button onClick={() => go(item.target!)}>{item.label}</button>
+          ) : (
+            <strong>{item.label}</strong>
+          )}
+        </span>
+      ))}
+    </nav>
   );
 }
 
@@ -422,20 +486,129 @@ function AssignmentDetailScreen({ go }: { go: (screen: Screen) => void }) {
 }
 
 function ReviewScreen({ go }: { go: (screen: Screen) => void }) {
+  const reviewItems = [
+    {
+      name: "张同学",
+      meta: "20260001 · PDF 1.8 MB",
+      status: "AI 已完成 · 86",
+      tone: "green",
+      note: "低风险",
+      active: true,
+    },
+    {
+      name: "李同学",
+      meta: "20260002 · Word 760 KB",
+      status: "AI 失败 · 迟交",
+      tone: "red",
+      note: "需人工批阅",
+      active: false,
+    },
+    {
+      name: "赵同学",
+      meta: "20260004 · PDF 2.1 MB",
+      status: "待人工",
+      tone: "purple",
+      note: "无 AI 建议",
+      active: false,
+    },
+  ];
+
   return (
-    <section className="review-grid">
-      <article className="panel page-panel">
-        <PanelTitle title="学生原文" action="下一份" onClick={() => go("review")} />
-        <div className="paper-preview">
-          <strong>张同学 · 20260001</strong>
-          <p>本文围绕现代大学教育中的阅读与表达展开，讨论通识教育、课堂讨论和写作训练之间的关系...</p>
+    <section className="review-shell">
+      <article className="panel review-queue-panel">
+        <PanelTitle title="待复核提交" action="全部" onClick={() => go("assignment-management")} />
+        <div className="review-filter-tabs">
+          <button className="active">待复核</button>
+          <button>AI 失败</button>
+          <button>已发布</button>
+          <button>全部</button>
+        </div>
+        <div className="review-summary-chip">• 38 当前筛选：待复核</div>
+        <div className="review-list">
+          {reviewItems.map((item) => (
+            <button key={item.name} className={`review-list-item ${item.active ? "active" : ""}`} onClick={() => go("review")}>
+              <div className="review-list-main">
+                <strong>{item.name}</strong>
+                <span>{item.meta}</span>
+                <em>{item.note}</em>
+              </div>
+              <div className={`status-pill ${item.tone}`}>{item.status}</div>
+            </button>
+          ))}
         </div>
       </article>
-      <aside className="panel page-panel">
-        <PanelTitle title="AI 初评建议" />
-        <div className="score-ring">86</div>
-        <div className="text-block"><strong>主要问题</strong><p>论证结构基本完整，但结尾收束略弱，个别引用格式不统一。</p></div>
-        <button className="solid-action wide" onClick={() => go("assignment-detail")}>保存并发布结果</button>
+
+      <article className="panel review-preview-panel">
+        <PanelTitle title="学生原文" action="下载原文件" onClick={() => go("assignment-detail")} />
+        <div className="review-preview-toolbar">
+          <span className="status-pill purple">第 1 / 5 页</span>
+          <button className="outline-action">上一页</button>
+          <button className="outline-action">下一页</button>
+          <button className="outline-action">放大</button>
+        </div>
+        <div className="paper-preview review-paper">
+          <strong>张同学的作业预览</strong>
+          <p>张同学 · 20260001 · PDF 1.8 MB · 06-18 21:12</p>
+          <div className="paper-lines">
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+          <p className="review-paper-hint">此区域展示学生提交文件的正文预览，方便教师对照 AI 建议进行判断。后续开发可接入 PDF/Word 预览服务。</p>
+        </div>
+      </article>
+
+      <aside className="panel review-side-panel">
+        <PanelTitle title="初评与复核" />
+        <div className="review-ai-note">
+          AI 初评仅作为教师侧建议，学生端只能看到教师复核后发布的最终分数与评语。
+        </div>
+        <div className="review-score-card">
+          <div className="review-score-ring">
+            <strong>86</strong>
+          </div>
+          <div>
+            <div className="review-score-title">建议分数：86 / 100</div>
+            <p>建议教师重点核对引用格式、结论完整度和论证结构。</p>
+          </div>
+        </div>
+        <div className="review-breakdown">
+          <div><span>内容完整</span><strong>27/30</strong></div>
+          <div><span>论证逻辑</span><strong>26/30</strong></div>
+          <div><span>资料引用</span><strong>17/20</strong></div>
+          <div><span>表达规范</span><strong>16/20</strong></div>
+        </div>
+        <div className="review-notes">
+          <strong>主要优点：</strong>
+          <p>结构完整，观点明确，材料引用较充分。</p>
+          <strong>主要问题：</strong>
+          <p>结论部分略短，引用格式不够统一。</p>
+          <strong>评分依据：</strong>
+          <p>内容 27，逻辑 26，引用 17，表达 16。</p>
+        </div>
+        <div className="review-form">
+          <label>
+            <span>最终分数</span>
+            <input defaultValue="88" />
+          </label>
+          <label>
+            <span>教师评语</span>
+            <textarea defaultValue="整体完成较好，论证结构清晰。建议进一步加强结论部分与课程主题的关联。" />
+          </label>
+        </div>
+        <div className="review-publish-note">
+          <strong>发布前确认</strong>
+          <p>最终分数、教师评语、是否允许学生查看 AI 摘要均需教师确认。</p>
+        </div>
+        <div className="review-actions">
+          <button className="outline-action">退回修改</button>
+          <button className="outline-action">保存草稿</button>
+          <button className="solid-action">发布结果并下一份</button>
+        </div>
       </aside>
     </section>
   );

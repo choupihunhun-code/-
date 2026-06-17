@@ -193,6 +193,27 @@
     @apply min-w-0 px-6 pb-7 pt-5;
   }
 
+  .breadcrumbs {
+    @apply mb-4 flex flex-wrap items-center gap-2 text-xs font-bold text-[#8a94aa];
+  }
+
+  .breadcrumbs-item {
+    @apply inline-flex items-center gap-2;
+  }
+
+  .breadcrumbs-item:not(:last-child)::after {
+    content: "/";
+    @apply text-[#b5bfd3];
+  }
+
+  .breadcrumbs button {
+    @apply bg-transparent p-0 text-[#635bff];
+  }
+
+  .breadcrumbs strong {
+    @apply text-[#15213a];
+  }
+
   .page-heading {
     @apply mb-4 flex items-center justify-between gap-4;
   }
@@ -421,6 +442,169 @@
     @apply grid grid-cols-[minmax(0,1fr)_320px] gap-4;
   }
 
+  .review-shell {
+    @apply grid grid-cols-[280px_minmax(360px,1fr)_360px] gap-4;
+  }
+
+  .review-queue-panel,
+  .review-preview-panel,
+  .review-side-panel {
+    @apply min-h-[610px] px-4 pb-4 pt-[18px];
+  }
+
+  .review-filter-tabs {
+    @apply mb-3 grid grid-cols-4 gap-1 rounded-xl border border-[#e6eafe] bg-[#f8faff] p-1;
+  }
+
+  .review-filter-tabs button {
+    @apply h-9 rounded-lg bg-transparent text-xs font-bold text-[#64748b];
+  }
+
+  .review-filter-tabs button.active {
+    @apply bg-white text-[#635bff] shadow-[0_8px_18px_rgba(80,70,150,0.08)];
+  }
+
+  .review-summary-chip {
+    @apply mb-3 rounded-xl border border-[#e6eafe] bg-[#fafbff] px-3 py-2.5 text-xs font-bold text-[#73809a];
+  }
+
+  .review-list {
+    @apply grid gap-3;
+  }
+
+  .review-list-item {
+    @apply grid grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-[14px] border border-[#e6eafe] bg-white p-3 text-left;
+  }
+
+  .review-list-item.active {
+    @apply border-[#8aa5ff] bg-[#f8fbff] shadow-[0_12px_28px_rgba(99,91,255,0.12)];
+  }
+
+  .review-list-main strong {
+    @apply block text-[14px] text-[#15213a];
+  }
+
+  .review-list-main span,
+  .review-list-main em {
+    @apply mt-2 block text-xs not-italic text-[#73809a];
+  }
+
+  .review-preview-toolbar {
+    @apply mb-4 flex flex-wrap items-center gap-2;
+  }
+
+  .review-paper {
+    @apply min-h-[460px] bg-[#fbfdff];
+  }
+
+  .review-paper > p {
+    @apply m-0 mb-4 text-sm text-[#73809a];
+  }
+
+  .paper-lines {
+    @apply grid gap-3 py-3;
+  }
+
+  .paper-lines span {
+    @apply block h-3 rounded-full bg-[#e2e7ef];
+  }
+
+  .paper-lines span:nth-child(2n) {
+    @apply w-4/5;
+  }
+
+  .paper-lines span:nth-child(3n) {
+    @apply w-3/5;
+  }
+
+  .review-paper-hint {
+    @apply mt-6 rounded-xl border border-[#e6eafe] bg-white p-4 leading-7;
+  }
+
+  .review-ai-note,
+  .review-publish-note {
+    @apply rounded-[14px] border border-[#f4d59a] bg-[#fff8ea] px-4 py-3 text-[13px] leading-6 text-[#d97706];
+  }
+
+  .review-score-card {
+    @apply mt-4 grid grid-cols-[96px_1fr] items-center gap-4 rounded-[14px] border border-[#e6eafe] bg-[#fafbff] p-4;
+  }
+
+  .review-score-ring {
+    @apply grid h-20 w-20 place-items-center rounded-full text-[#635bff];
+    background: radial-gradient(circle, #fff 56%, transparent 57%), conic-gradient(#635bff 86%, #edf1ff 0);
+  }
+
+  .review-score-ring strong {
+    @apply text-2xl font-extrabold;
+  }
+
+  .review-score-title {
+    @apply font-extrabold text-[#15213a];
+  }
+
+  .review-score-card p {
+    @apply m-0 mt-2 text-[13px] leading-6 text-[#73809a];
+  }
+
+  .review-breakdown {
+    @apply my-4 grid gap-2;
+  }
+
+  .review-breakdown div {
+    @apply flex items-center justify-between text-sm;
+  }
+
+  .review-breakdown span,
+  .review-breakdown strong {
+    @apply text-[#15213a];
+  }
+
+  .review-notes {
+    @apply rounded-[14px] border border-[#e6eafe] bg-[#fbfdff] p-4 text-sm leading-7 text-[#15213a];
+  }
+
+  .review-notes p {
+    @apply mb-3 mt-1 text-[#15213a];
+  }
+
+  .review-form {
+    @apply mt-4 grid gap-3;
+  }
+
+  .review-form label {
+    @apply grid gap-2 text-sm font-bold text-[#15213a];
+  }
+
+  .review-form input,
+  .review-form textarea {
+    @apply w-full rounded-xl border border-[#d9e0fb] bg-white px-3 text-sm font-normal text-[#15213a] outline-none focus:border-[#7b61ff] focus:ring-2 focus:ring-[#7b61ff]/15;
+  }
+
+  .review-form input {
+    @apply h-10;
+  }
+
+  .review-form textarea {
+    @apply min-h-[104px] resize-y py-3 leading-6;
+  }
+
+  .review-publish-note {
+    @apply mt-4 border-[#e6eafe] bg-[#fafbff] text-[#73809a];
+  }
+
+  .review-publish-note strong {
+    @apply text-[#d97706];
+  }
+
+  .review-publish-note p {
+    @apply m-0 mt-2;
+  }
+
+  .review-actions {
+    @apply mt-4 flex flex-wrap justify-end gap-2;
+  }
+
   .paper-preview {
     @apply min-h-[360px] rounded-[14px] border border-[#e6eafe] bg-white p-[18px] leading-8 text-[#73809a];
   }
@@ -457,7 +641,8 @@
   .dashboard-grid,
   .card-grid,
   .form-grid,
-  .review-grid {
+  .review-grid,
+  .review-shell {
     @apply grid-cols-1;
   }
 
