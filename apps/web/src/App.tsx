@@ -8,8 +8,10 @@ import {
   HelpCircle,
   LayoutDashboard,
   LogIn,
-  Plus,
+  LogOut,
+  Send,
   UserRound,
+  X,
 } from "lucide-react";
 
 type Screen =
@@ -25,9 +27,7 @@ type Screen =
   | "student-assignments"
   | "student-assignment-detail"
   | "student-submit-success"
-  | "student-result"
-  | "login"
-  | "profile";
+  | "student-result";
 
 type Assignment = {
   title: string;
@@ -76,12 +76,13 @@ const screenMeta: Record<Screen, { title: string; desc: string }> = {
   "student-assignment-detail": { title: "学生作业详情", desc: "学生查看作业要求并提交文本、链接或附件。" },
   "student-submit-success": { title: "提交成功", desc: "提交成功后查看提交状态，并等待教师批阅发布。" },
   "student-result": { title: "学生查看结果", desc: "学生只能查看教师发布后的最终分数和教师评语。" },
-  login: { title: "登录", desc: "教师通过手机号、验证码或账号密码进入工作台。" },
-  profile: { title: "个人中心", desc: "维护教师资料、学校院系、AI 偏好和成绩导出模板。" },
 };
 
 function App() {
   const [screen, setScreen] = useState<Screen>("dashboard");
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
   const current = screenMeta[screen];
   const totals = useMemo(() => ({
     pending: assignments.reduce((sum, item) => sum + item.pending, 0),
@@ -89,6 +90,20 @@ function App() {
     active: assignments.filter((item) => item.status === "批阅中").length,
     drafts: assignments.filter((item) => item.status === "草稿").length,
   }), []);
+
+  const openAccount = () => {
+    if (!loggedIn) {
+      setLoginOpen(true);
+      return;
+    }
+    setAccountOpen((value) => !value);
+  };
+
+  const completeLogin = () => {
+    setLoggedIn(true);
+    setLoginOpen(false);
+    setAccountOpen(true);
+  };
 
   return (
     <div className="desktop-frame">
@@ -99,32 +114,46 @@ function App() {
         </button>
         <div className="header-actions">
           <button className="message-btn">消息</button>
-          <button className="login-state" onClick={() => setScreen("login")}>
-            <HelpCircle size={17} />
-            <strong>未登录</strong>
-          </button>
+          <div className="relative">
+            <button className={loggedIn ? "account-chip" : "login-state"} onClick={openAccount}>
+              {loggedIn ? (
+                <>
+                  <span className="avatar">王</span>
+                  <strong>T20260001</strong>
+                </>
+              ) : (
+                <>
+                  <HelpCircle size={17} />
+                  <strong>未登录</strong>
+                </>
+              )}
+            </button>
+            {loggedIn && accountOpen && <AccountPanel onLogout={() => { setLoggedIn(false); setAccountOpen(false); }} />}
+          </div>
         </div>
       </header>
 
       <div className="workspace">
         <aside className="side-nav">
-          <nav>
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  className={screen === item.screen ? "active" : ""}
-                  key={item.screen}
-                  onClick={() => setScreen(item.screen)}
-                >
-                  <Icon size={15} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-          <button className="student-link" onClick={() => setScreen("student-entry")}>学生端入口</button>
-          <div className="ai-note">AI 仅提供初评建议，最终结果必须由教师复核发布。</div>
+          <div className="side-nav-card">
+            <nav>
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    className={screen === item.screen ? "active" : ""}
+                    key={item.screen}
+                    onClick={() => setScreen(item.screen)}
+                  >
+                    <Icon size={15} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+            <button className="student-link" onClick={() => setScreen("student-entry")}>学生端入口</button>
+            <div className="ai-note">AI 仅提供初评建议，最终结果必须由教师复核发布。</div>
+          </div>
         </aside>
 
         <main className="dashboard">
@@ -133,9 +162,9 @@ function App() {
               <h2>{current.title}</h2>
               <p>{current.desc}</p>
             </div>
-            <button className="outline-action" onClick={() => setScreen("profile")}>
+            <button className="outline-action" onClick={openAccount}>
               <UserRound size={15} />
-              个人中心
+              {loggedIn ? "账号资料" : "登录查看资料"}
             </button>
           </div>
 
@@ -152,10 +181,124 @@ function App() {
           {screen === "student-assignment-detail" && <StudentAssignmentDetailScreen go={setScreen} />}
           {screen === "student-submit-success" && <StudentSubmitSuccessScreen go={setScreen} />}
           {screen === "student-result" && <StudentResultScreen go={setScreen} />}
-          {screen === "login" && <LoginScreen go={setScreen} />}
-          {screen === "profile" && <ProfileScreen />}
         </main>
       </div>
+
+      {loginOpen && <LoginModal onClose={() => setLoginOpen(false)} onLogin={completeLogin} />}
+    </div>
+  );
+}
+
+function AccountPanel({ onLogout }: { onLogout: () => void }) {
+  return (
+    <div className="account-panel">
+      <div className="flex items-center gap-3 border-b border-[#e6eafe] pb-3">
+        <span className="avatar large">王</span>
+        <div>
+          <strong className="block text-[#15213a]">王老师</strong>
+          <span className="text-xs text-[#73809a]">教师 ID：T20260001</span>
+        </div>
+      </div>
+      <div className="account-info">
+        <InfoLine label="学校院系" value="某某大学 / 文学院" />
+        <InfoLine label="匹配账号" value="教师工号 20260001" />
+        <InfoLine label="绑定手机" value="138****0000" />
+        <InfoLine label="AI 评语风格" value="详细、建设性" />
+        <InfoLine label="成绩导出模板" value="教务系统标准模板" />
+      </div>
+      <button className="logout-button" onClick={onLogout}>
+        <LogOut size={15} />
+        退出登录
+      </button>
+    </div>
+  );
+}
+
+function LoginModal({ onClose, onLogin }: { onClose: () => void; onLogin: () => void }) {
+  const [portal, setPortal] = useState<"teacher" | "student">("teacher");
+
+  return (
+    <div className="modal-backdrop">
+      <section className="login-modal">
+        <header className="login-modal-head">
+          <div>
+            <h2>系统登录</h2>
+            <p>教师端用于课程班、作业发布、AI 初评复核和成绩导出。</p>
+          </div>
+          <button className="modal-close" onClick={onClose} aria-label="关闭登录弹窗">
+            <X size={16} />
+          </button>
+        </header>
+
+        <div className="login-tabs">
+          <button className={portal === "teacher" ? "active" : ""} onClick={() => setPortal("teacher")}>教师端</button>
+          <button className={portal === "student" ? "active" : ""} onClick={() => setPortal("student")}>学生端</button>
+        </div>
+
+        <div className="login-form">
+          <label>
+            <span>学校</span>
+            <select defaultValue="某某大学">
+              <option>某某大学</option>
+              <option>示例师范大学</option>
+              <option>城市学院</option>
+            </select>
+          </label>
+          {portal === "teacher" ? (
+            <>
+              <LoginInput label="工号" placeholder="请输入教师工号" hint="用于匹配学校教师账号，可输入工号或学校统一身份账号。" />
+              <LoginInput label="手机号" placeholder="请输入学校绑定手机号" hint="请输入 11 位中国大陆手机号，用于接收验证码。" />
+              <LoginInput label="密码" placeholder="请输入密码" hint="密码至少 6 位；忘记密码时可使用统一身份认证登录。" type="password" />
+            </>
+          ) : (
+            <>
+              <LoginInput label="学号" placeholder="请输入学生学号" hint="学生可通过课程链接或课程码进入作业列表。" />
+              <LoginInput label="手机号" placeholder="请输入学校绑定手机号" hint="用于核验学生身份。" />
+            </>
+          )}
+          <label>
+            <span>验证码</span>
+            <div className="code-row">
+              <input placeholder="请输入验证码" />
+              <button>
+                <Send size={14} />
+                发送
+              </button>
+            </div>
+            <em>验证码为 6 位数字，发送后 60 秒内有效。</em>
+          </label>
+          <div className="login-note">
+            {portal === "teacher"
+              ? "教师端用于课程班、作业发布、AI 初评复核和成绩导出。学生端请通过课程链接或学生端入口登录。"
+              : "学生端用于查看作业、提交作业和查看教师发布后的最终结果。"}
+          </div>
+        </div>
+
+        <footer className="login-modal-foot">
+          <button className="solid-action wide" onClick={onLogin}>
+            登录
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+function LoginInput({ label, placeholder, hint, type = "text" }: { label: string; placeholder: string; hint: string; type?: string }) {
+  return (
+    <label>
+      <span>{label}</span>
+      <input type={type} placeholder={placeholder} />
+      <em>{hint}</em>
+    </label>
+  );
+}
+
+function InfoLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <span className="text-[#73809a]">{label}</span>
+      <strong className="text-right font-semibold text-[#15213a]">{value}</strong>
     </div>
   );
 }
@@ -353,31 +496,6 @@ function StudentResultScreen({ go }: { go: (screen: Screen) => void }) {
       <PanelTitle title="已发布结果" action="返回列表" onClick={() => go("student-assignments")} />
       <div className="score-ring">91</div>
       <div className="text-block"><strong>教师评语</strong><p>观点明确，材料使用较充分。建议继续加强结尾的归纳力度。</p></div>
-    </section>
-  );
-}
-
-function LoginScreen({ go }: { go: (screen: Screen) => void }) {
-  return (
-    <section className="panel page-panel centered">
-      <h3>登录</h3>
-      <Field label="手机号" value="13800000000" />
-      <Field label="验证码" value="123456" />
-      <button className="solid-action wide" onClick={() => go("dashboard")}>登录进入</button>
-    </section>
-  );
-}
-
-function ProfileScreen() {
-  return (
-    <section className="panel page-panel">
-      <PanelTitle title="个人中心" />
-      <div className="form-grid">
-        <Field label="教师姓名" value="王老师" />
-        <Field label="学校院系" value="文学院 / 公共课教学部" />
-        <Field label="AI 评语风格" value="详细、建设性" />
-        <Field label="成绩导出模板" value="教务系统标准模板" />
-      </div>
     </section>
   );
 }
