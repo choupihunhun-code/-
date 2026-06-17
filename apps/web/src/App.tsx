@@ -151,7 +151,6 @@ function App() {
                 );
               })}
             </nav>
-            <button className="student-link" onClick={() => setScreen("student-entry")}>学生端入口</button>
             <div className="ai-note">AI 仅提供初评建议，最终结果必须由教师复核发布。</div>
           </div>
         </aside>
