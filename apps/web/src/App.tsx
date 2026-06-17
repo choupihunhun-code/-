@@ -155,6 +155,13 @@ const teacherMessages: TeacherMessage[] = [
     target: "course-detail",
   },
   {
+    title: "周同学申请进入实验心理学 2 班",
+    detail: "学生提交了入班申请，等待教师核验后加入课程班。",
+    category: "学生",
+    unread: true,
+    target: "classes",
+  },
+  {
     title: "7 份作业 AI 初评失败",
     detail: "多为附件格式异常或文本识别失败，需要教师人工处理。",
     category: "系统",
@@ -757,6 +764,11 @@ function MessageDrawer({
   onReadAll: () => void;
   go: (screen: Screen) => void;
 }) {
+  const [activeTab, setActiveTab] = useState<"全部" | TeacherMessage["category"]>("全部");
+  const visibleMessages = activeTab === "全部"
+    ? messages
+    : messages.filter((item) => item.category === activeTab);
+
   return (
     <div className="drawer-backdrop" role="presentation" onClick={onClose}>
       <aside className="drawer-panel message-drawer" role="dialog" aria-modal="true" aria-labelledby="message-center-title" onClick={(event) => event.stopPropagation()}>
@@ -771,15 +783,21 @@ function MessageDrawer({
 
         <div className="message-toolbar">
           <div className="message-tabs">
-            <button className="active">全部</button>
-            <button>系统</button>
-            <button>学生</button>
+            {(["全部", "系统", "学生"] as const).map((tab) => (
+              <button
+                key={tab}
+                className={activeTab === tab ? "active" : ""}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
           <button className="message-read-all" onClick={onReadAll}>一键已读</button>
         </div>
 
         <div className="message-list">
-          {messages.map((item) => (
+          {visibleMessages.map((item) => (
             <button
               key={item.title}
               className="message-card"
