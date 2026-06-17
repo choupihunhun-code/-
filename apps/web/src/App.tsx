@@ -223,7 +223,6 @@ function LoginModal({ onClose, onLogin }: { onClose: () => void; onLogin: () => 
         <header className="login-modal-head">
           <div>
             <h2>系统登录</h2>
-            <p>教师端用于课程班、作业发布、AI 初评复核和成绩导出。</p>
           </div>
           <button className="modal-close" onClick={onClose} aria-label="关闭登录弹窗">
             <X size={16} />
