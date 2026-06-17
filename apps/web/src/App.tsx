@@ -7,7 +7,6 @@ import {
   FileText,
   HelpCircle,
   LayoutDashboard,
-  LogIn,
   LogOut,
   Send,
   UserRound,
@@ -22,12 +21,7 @@ type Screen =
   | "grade-management"
   | "assignment-create"
   | "assignment-detail"
-  | "review"
-  | "student-entry"
-  | "student-assignments"
-  | "student-assignment-detail"
-  | "student-submit-success"
-  | "student-result";
+  | "review";
 
 type Assignment = {
   title: string;
@@ -81,11 +75,6 @@ const screenMeta: Record<Screen, { title: string; desc: string }> = {
   "assignment-create": { title: "发布作业", desc: "配置作业说明、提交方式、AI 初评标准和发布范围。" },
   "assignment-detail": { title: "作业详情", desc: "查看提交状态、AI 初评进度、复核状态和成绩导出入口。" },
   review: { title: "批阅工作台", desc: "对照学生原文、AI 初评建议和教师最终复核结果。" },
-  "student-entry": { title: "学生端入口", desc: "学生通过课程链接或临时身份进入作业提交页面。" },
-  "student-assignments": { title: "学生作业列表", desc: "学生查看需要完成的作业和已发布结果。" },
-  "student-assignment-detail": { title: "学生作业详情", desc: "学生查看作业要求并提交文本、链接或附件。" },
-  "student-submit-success": { title: "提交成功", desc: "提交成功后查看提交状态，并等待教师批阅发布。" },
-  "student-result": { title: "学生查看结果", desc: "学生只能查看教师发布后的最终分数和教师评语。" },
 };
 
 const routeMeta: Record<Screen, RouteMeta> = {
@@ -97,11 +86,6 @@ const routeMeta: Record<Screen, RouteMeta> = {
   "assignment-create": { path: "/assignments/new", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "作业管理", target: "assignment-management" }, { label: "发布作业" }] },
   "assignment-detail": { path: "/assignments/course-paper", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "作业管理", target: "assignment-management" }, { label: "课程论文" }] },
   review: { path: "/assignments/course-paper/review", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "作业管理", target: "assignment-management" }, { label: "课程论文", target: "assignment-detail" }, { label: "批阅工作台" }] },
-  "student-entry": { path: "/student", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "学生端入口" }] },
-  "student-assignments": { path: "/student/assignments", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "学生端入口", target: "student-entry" }, { label: "我的作业" }] },
-  "student-assignment-detail": { path: "/student/assignments/course-paper", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "学生端入口", target: "student-entry" }, { label: "我的作业", target: "student-assignments" }, { label: "作业详情" }] },
-  "student-submit-success": { path: "/student/assignments/course-paper/submitted", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "学生端入口", target: "student-entry" }, { label: "我的作业", target: "student-assignments" }, { label: "提交成功" }] },
-  "student-result": { path: "/student/assignments/course-paper/result", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "学生端入口", target: "student-entry" }, { label: "我的作业", target: "student-assignments" }, { label: "批阅结果" }] },
 };
 
 const pathToScreen = Object.fromEntries(
@@ -219,11 +203,6 @@ function App() {
           {screen === "assignment-create" && <AssignmentCreateScreen go={navigate} />}
           {screen === "assignment-detail" && <AssignmentDetailScreen go={navigate} />}
           {screen === "review" && <ReviewScreen go={navigate} />}
-          {screen === "student-entry" && <StudentEntryScreen go={navigate} />}
-          {screen === "student-assignments" && <StudentAssignmentsScreen go={navigate} />}
-          {screen === "student-assignment-detail" && <StudentAssignmentDetailScreen go={navigate} />}
-          {screen === "student-submit-success" && <StudentSubmitSuccessScreen go={navigate} />}
-          {screen === "student-result" && <StudentResultScreen go={navigate} />}
         </main>
       </div>
 
@@ -274,8 +253,6 @@ function AccountPanel({ onLogout }: { onLogout: () => void }) {
 }
 
 function LoginModal({ onClose, onLogin }: { onClose: () => void; onLogin: () => void }) {
-  const [portal, setPortal] = useState<"teacher" | "student">("teacher");
-
   return (
     <div className="modal-backdrop">
       <section className="login-modal">
@@ -288,11 +265,6 @@ function LoginModal({ onClose, onLogin }: { onClose: () => void; onLogin: () => 
           </button>
         </header>
 
-        <div className="login-tabs">
-          <button className={portal === "teacher" ? "active" : ""} onClick={() => setPortal("teacher")}>教师端</button>
-          <button className={portal === "student" ? "active" : ""} onClick={() => setPortal("student")}>学生端</button>
-        </div>
-
         <div className="login-form">
           <label>
             <span>学校</span>
@@ -302,18 +274,9 @@ function LoginModal({ onClose, onLogin }: { onClose: () => void; onLogin: () => 
               <option>城市学院</option>
             </select>
           </label>
-          {portal === "teacher" ? (
-            <>
-              <LoginInput label="工号" placeholder="请输入教师工号" hint="用于匹配学校教师账号，可输入工号或学校统一身份账号。" />
-              <LoginInput label="手机号" placeholder="请输入学校绑定手机号" hint="请输入 11 位中国大陆手机号，用于接收验证码。" />
-              <LoginInput label="密码" placeholder="请输入密码" hint="密码至少 6 位；忘记密码时可使用统一身份认证登录。" type="password" />
-            </>
-          ) : (
-            <>
-              <LoginInput label="学号" placeholder="请输入学生学号" hint="学生可通过课程链接或课程码进入作业列表。" />
-              <LoginInput label="手机号" placeholder="请输入学校绑定手机号" hint="用于核验学生身份。" />
-            </>
-          )}
+          <LoginInput label="工号" placeholder="请输入教师工号" hint="用于匹配学校教师账号，可输入工号或学校统一身份账号。" />
+          <LoginInput label="手机号" placeholder="请输入学校绑定手机号" hint="请输入 11 位中国大陆手机号，用于接收验证码。" />
+          <LoginInput label="密码" placeholder="请输入密码" hint="密码至少 6 位；忘记密码时可使用统一身份认证登录。" type="password" />
           <label>
             <span>验证码</span>
             <div className="code-row">
@@ -326,9 +289,7 @@ function LoginModal({ onClose, onLogin }: { onClose: () => void; onLogin: () => 
             <em>验证码为 6 位数字，发送后 60 秒内有效。</em>
           </label>
           <div className="login-note">
-            {portal === "teacher"
-              ? "教师端用于课程班、作业发布、AI 初评复核和成绩导出。学生端请通过课程链接或学生端入口登录。"
-              : "学生端用于查看作业、提交作业和查看教师发布后的最终结果。"}
+            教师端用于课程班、作业发布、AI 初评复核和成绩导出。
           </div>
         </div>
 
@@ -565,7 +526,7 @@ function ReviewScreen({ go }: { go: (screen: Screen) => void }) {
       <aside className="panel review-side-panel">
         <PanelTitle title="初评与复核" />
         <div className="review-ai-note">
-          AI 初评仅作为教师侧建议，学生端只能看到教师复核后发布的最终分数与评语。
+          AI 初评仅作为教师侧建议，最终分数与评语必须由教师复核后发布。
         </div>
         <div className="review-score-card">
           <div className="review-score-ring">
@@ -610,59 +571,6 @@ function ReviewScreen({ go }: { go: (screen: Screen) => void }) {
           <button className="solid-action">发布结果并下一份</button>
         </div>
       </aside>
-    </section>
-  );
-}
-
-function StudentEntryScreen({ go }: { go: (screen: Screen) => void }) {
-  return (
-    <section className="panel page-panel centered">
-      <LogIn size={34} />
-      <h3>学生端入口</h3>
-      <p>学生通过课程链接或临时身份进入作业提交页面。</p>
-      <button className="solid-action" onClick={() => go("student-assignments")}>确认身份并进入</button>
-      <button className="outline-action" onClick={() => go("dashboard")}>返回教师端</button>
-    </section>
-  );
-}
-
-function StudentAssignmentsScreen({ go }: { go: (screen: Screen) => void }) {
-  return (
-    <section className="panel page-panel">
-      <PanelTitle title="我的作业" action="切换身份" onClick={() => go("student-entry")} />
-      <Todo title="课程论文：现代大学教育中的阅读与表达" desc="截止 2026-06-20 20:00 / 可提交" action="去提交" primary onClick={() => go("student-assignment-detail")} />
-      <Todo title="阅读札记 01：文本细读与观点提炼" desc="教师已发布结果" action="查看结果" onClick={() => go("student-result")} />
-    </section>
-  );
-}
-
-function StudentAssignmentDetailScreen({ go }: { go: (screen: Screen) => void }) {
-  return (
-    <section className="panel page-panel">
-      <PanelTitle title="作业要求与提交" action="提交作业" onClick={() => go("student-submit-success")} />
-      <div className="text-block"><strong>提交要求</strong><p>上传 PDF 或 Word，并补充 100 字以内说明。提交后等待教师复核发布结果。</p></div>
-      <Field label="附件" value="未选择文件" />
-    </section>
-  );
-}
-
-function StudentSubmitSuccessScreen({ go }: { go: (screen: Screen) => void }) {
-  return (
-    <section className="panel page-panel centered">
-      <h3>提交成功</h3>
-      <p>作业已提交，等待教师批阅发布。</p>
-      <button className="solid-action" onClick={() => go("student-assignments")}>返回作业列表</button>
-      <button className="outline-action" onClick={() => go("student-result")}>查看发布后结果示例</button>
-    </section>
-  );
-}
-
-function StudentResultScreen({ go }: { go: (screen: Screen) => void }) {
-  return (
-    <section className="panel page-panel">
-      <PanelTitle title="已发布结果" action="返回列表" onClick={() => go("student-assignments")} />
-      <div className="score-ring">91</div>
-      <div className="text-block"><strong>教师评语</strong><p>观点明确，材料使用较充分。建议继续加强结尾的归纳力度。</p></div>
     </section>
   );
 }

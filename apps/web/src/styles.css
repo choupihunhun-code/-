@@ -112,18 +112,6 @@
     @apply grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-[#e6eafe] bg-white text-[#15213a];
   }
 
-  .login-tabs {
-    @apply mx-6 mt-5 grid grid-cols-2 rounded-xl border border-[#e6eafe] bg-[#f8faff] p-1;
-  }
-
-  .login-tabs button {
-    @apply h-10 rounded-lg bg-transparent font-bold text-[#64748b];
-  }
-
-  .login-tabs button.active {
-    @apply bg-white text-[#635bff] shadow-[0_8px_18px_rgba(80,70,150,0.08)];
-  }
-
   .login-form {
     @apply grid min-h-0 flex-1 gap-3 overflow-y-auto px-6 py-4;
   }
@@ -179,10 +167,6 @@
 
   .side-nav-card button.active {
     @apply bg-[#edf0ff] text-[#635bff];
-  }
-
-  .student-link {
-    @apply mt-3 h-10 rounded-xl bg-[#eef1ff] text-[#635bff];
   }
 
   .ai-note {
