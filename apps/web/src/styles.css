@@ -249,6 +249,14 @@
     @apply h-10 rounded-xl border border-[#d9e0fb] bg-white px-3 text-sm font-normal text-[#15213a] outline-none focus:border-[#7b61ff] focus:ring-2 focus:ring-[#7b61ff]/15;
   }
 
+  .login-form select {
+    @apply appearance-none pr-11;
+    background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2315213a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 14px center;
+    background-repeat: no-repeat;
+    background-size: 16px 16px;
+  }
+
   .login-form em {
     @apply text-xs font-normal not-italic leading-5 text-[#9aa6bd];
   }
