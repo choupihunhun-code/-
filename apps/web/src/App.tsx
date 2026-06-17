@@ -336,9 +336,6 @@ function LoginModal({ onClose, onLogin }: { onClose: () => void; onLogin: () => 
             </div>
             <em>验证码为 6 位数字，发送后 60 秒内有效。</em>
           </label>
-          <div className="login-note">
-            教师端用于课程班、作业发布、AI 初评复核和成绩导出。
-          </div>
         </div>
 
         <footer className="login-modal-foot">

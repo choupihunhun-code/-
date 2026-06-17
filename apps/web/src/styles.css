@@ -201,10 +201,6 @@
     @apply inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-[#d9e0fb] bg-white text-sm font-semibold text-[#15213a];
   }
 
-  .login-note {
-    @apply rounded-[14px] border border-[#cdd8ff] bg-[#eef4ff] px-4 py-3 text-sm leading-6 text-[#5b55ff];
-  }
-
   .login-modal-foot {
     @apply shrink-0 border-t border-[#eef1fb] bg-white px-6 pb-6 pt-4;
   }
