@@ -297,29 +297,8 @@
     @apply min-w-0 px-6 pb-7 pt-5;
   }
 
-  .breadcrumbs {
-    @apply mb-4 flex flex-wrap items-center gap-2 text-xs font-bold text-[#8a94aa];
-  }
-
-  .breadcrumbs-item {
-    @apply inline-flex items-center gap-2;
-  }
-
-  .breadcrumbs-item:not(:last-child)::after {
-    content: "/";
-    @apply text-[#b5bfd3];
-  }
-
-  .breadcrumbs button {
-    @apply bg-transparent p-0 text-[#635bff];
-  }
-
-  .breadcrumbs strong {
-    @apply text-[#15213a];
-  }
-
   .page-heading {
-    @apply mb-4 flex items-center justify-between gap-4;
+    @apply mb-5 flex items-center justify-between gap-4;
   }
 
   .page-heading h2 {

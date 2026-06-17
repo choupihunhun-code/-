@@ -34,14 +34,8 @@ type Assignment = {
   due: string;
 };
 
-type BreadcrumbItem = {
-  label: string;
-  target?: Screen;
-};
-
 type RouteMeta = {
   path: string;
-  breadcrumbs: BreadcrumbItem[];
 };
 
 type PendingWorkItem = {
@@ -95,14 +89,14 @@ const screenMeta: Record<Screen, { title: string; desc: string }> = {
 };
 
 const routeMeta: Record<Screen, RouteMeta> = {
-  dashboard: { path: "/", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "工作台" }] },
-  classes: { path: "/classes", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "班级管理" }] },
-  "course-detail": { path: "/classes/chinese-a", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "班级管理", target: "classes" }, { label: "大学语文 2026 春 A 班" }] },
-  "assignment-management": { path: "/assignments", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "作业管理" }] },
-  "grade-management": { path: "/grades", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "成绩管理" }] },
-  "assignment-create": { path: "/assignments/new", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "作业管理", target: "assignment-management" }, { label: "发布作业" }] },
-  "assignment-detail": { path: "/assignments/course-paper", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "作业管理", target: "assignment-management" }, { label: "课程论文" }] },
-  review: { path: "/assignments/course-paper/review", breadcrumbs: [{ label: "首页", target: "dashboard" }, { label: "作业管理", target: "assignment-management" }, { label: "课程论文", target: "assignment-detail" }, { label: "批阅工作台" }] },
+  dashboard: { path: "/" },
+  classes: { path: "/classes" },
+  "course-detail": { path: "/classes/chinese-a" },
+  "assignment-management": { path: "/assignments" },
+  "grade-management": { path: "/grades" },
+  "assignment-create": { path: "/assignments/new" },
+  "assignment-detail": { path: "/assignments/course-paper" },
+  review: { path: "/assignments/course-paper/review" },
 };
 
 const pendingWorkItems: PendingWorkItem[] = [
@@ -195,7 +189,6 @@ function App() {
   const [messages, setMessages] = useState(teacherMessages);
   const [loggedIn, setLoggedIn] = useState(false);
   const current = screenMeta[screen];
-  const route = routeMeta[screen];
   const unreadCount = messages.filter((item) => item.unread).length;
   const totals = useMemo(() => ({
     pending: assignments.reduce((sum, item) => sum + item.pending, 0),
@@ -283,7 +276,6 @@ function App() {
         </aside>
 
         <main className="dashboard">
-          <Breadcrumbs items={route.breadcrumbs} go={navigate} />
           <div className="page-heading">
             <div>
               <h2>{current.title}</h2>
@@ -327,22 +319,6 @@ function App() {
 
       {loginOpen && <LoginModal onClose={() => setLoginOpen(false)} onLogin={completeLogin} />}
     </div>
-  );
-}
-
-function Breadcrumbs({ items, go }: { items: BreadcrumbItem[]; go: (screen: Screen) => void }) {
-  return (
-    <nav className="breadcrumbs" aria-label="面包屑导航">
-      {items.map((item, index) => (
-        <span key={`${item.label}-${index}`} className="breadcrumbs-item">
-          {item.target ? (
-            <button onClick={() => go(item.target!)}>{item.label}</button>
-          ) : (
-            <strong>{item.label}</strong>
-          )}
-        </span>
-      ))}
-    </nav>
   );
 }
 
