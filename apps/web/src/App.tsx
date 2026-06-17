@@ -55,7 +55,7 @@ const courses = [
 
 const navItems: Array<{ screen: Screen; label: string; icon: typeof LayoutDashboard }> = [
   { screen: "dashboard", label: "工作台", icon: LayoutDashboard },
-  { screen: "classes", label: "课程班", icon: BookOpen },
+  { screen: "classes", label: "班级管理", icon: BookOpen },
   { screen: "assignment-management", label: "作业管理", icon: ClipboardList },
   { screen: "grade-management", label: "成绩管理", icon: BarChart3 },
   { screen: "assignment-detail", label: "作业详情", icon: FileText },
