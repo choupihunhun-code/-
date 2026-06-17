@@ -1,0 +1,382 @@
+// 教师端教务系统 MVP - Prisma Schema 草案
+// 目标数据库：PostgreSQL
+// 说明：这是第一版数据模型草案，后续进入工程时可放入 apps/api/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountStatus {
+  active
+  disabled
+}
+
+enum CourseClassStatus {
+  active
+  archived
+}
+
+enum CourseType {
+  public
+  major
+  lab
+  other
+}
+
+enum AssignmentStatus {
+  draft
+  published
+  closed
+  archived
+  deleted
+}
+
+enum SubmitMode {
+  file
+  text
+  link
+}
+
+enum ScoreType {
+  percentage
+  level
+  pass_fail
+}
+
+enum SubmissionStatus {
+  not_submitted
+  submitted
+  late_submitted
+  returned
+  resubmitted
+}
+
+enum AiReviewStatus {
+  not_started
+  processing
+  completed
+  failed
+  manual_required
+}
+
+enum TeacherReviewStatus {
+  unreviewed
+  pending_review
+  manual_review
+  draft_saved
+  returned
+  published
+}
+
+enum ResultVisibility {
+  teacher_only
+  student_visible
+  corrected
+}
+
+enum ExportStatus {
+  processing
+  completed
+  failed
+}
+
+enum FileScene {
+  assignment_attachment
+  submission_attachment
+  export_file
+}
+
+model Teacher {
+  id                    String        @id @default(cuid())
+  name                  String
+  phone                 String        @unique
+  email                 String?
+  schoolName            String?       @map("school_name")
+  departmentName        String?       @map("department_name")
+  avatarUrl             String?       @map("avatar_url")
+  status                AccountStatus @default(active)
+  defaultAiCommentStyle String?       @map("default_ai_comment_style")
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @updatedAt @map("updated_at")
+
+  courseClasses      CourseClass[]
+  assignments        Assignment[]
+  teacherReviews     TeacherReview[]
+  exportTasks        ExportTask[]
+  resultPublications ResultPublication[] @relation("ResultPublishedBy")
+
+  @@map("teachers")
+}
+
+model Student {
+  id        String        @id @default(cuid())
+  name      String
+  studentNo String        @unique @map("student_no")
+  phone     String?
+  email     String?
+  status    AccountStatus @default(active)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  classStudents      ClassStudent[]
+  submissions        Submission[]
+  aiReviews          AiReview[]
+  teacherReviews     TeacherReview[]
+  resultPublications ResultPublication[]
+
+  @@map("students")
+}
+
+model CourseClass {
+  id                 String            @id @default(cuid())
+  teacherId          String            @map("teacher_id")
+  courseName         String            @map("course_name")
+  className          String            @map("class_name")
+  term               String
+  courseType         CourseType        @default(other) @map("course_type")
+  description        String?
+  status             CourseClassStatus @default(active)
+  studentCount       Int               @default(0) @map("student_count")
+  activeAssignmentCount Int            @default(0) @map("active_assignment_count")
+  pendingReviewCount Int               @default(0) @map("pending_review_count")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  teacher       Teacher        @relation(fields: [teacherId], references: [id])
+  classStudents ClassStudent[]
+  assignments   Assignment[]
+
+  @@index([teacherId])
+  @@index([status])
+  @@map("course_classes")
+}
+
+model ClassStudent {
+  id               String        @id @default(cuid())
+  classId          String        @map("class_id")
+  studentId        String        @map("student_id")
+  displayClassName String?       @map("display_class_name")
+  joinedAt         DateTime      @default(now()) @map("joined_at")
+  status           AccountStatus @default(active)
+
+  courseClass CourseClass @relation(fields: [classId], references: [id])
+  student     Student     @relation(fields: [studentId], references: [id])
+
+  @@unique([classId, studentId])
+  @@index([studentId])
+  @@map("class_students")
+}
+
+model Assignment {
+  id             String           @id @default(cuid())
+  classId        String           @map("class_id")
+  teacherId      String           @map("teacher_id")
+  title          String
+  description    String
+  dueAt          DateTime         @map("due_at")
+  submitModes    SubmitMode[]     @map("submit_modes")
+  scoreType      ScoreType        @default(percentage) @map("score_type")
+  maxScore       Int              @default(100) @map("max_score")
+  aiEnabled      Boolean          @default(true) @map("ai_enabled")
+  aiRubric       String?          @map("ai_rubric")
+  aiCommentStyle String?          @map("ai_comment_style")
+  allowLateSubmit Boolean         @default(true) @map("allow_late_submit")
+  status         AssignmentStatus @default(draft)
+  publishedAt    DateTime?        @map("published_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  courseClass CourseClass @relation(fields: [classId], references: [id])
+  teacher     Teacher     @relation(fields: [teacherId], references: [id])
+
+  submissions        Submission[]
+  aiReviews          AiReview[]
+  teacherReviews     TeacherReview[]
+  resultPublications ResultPublication[]
+  exportTasks        ExportTask[]
+  files              FileAsset[]
+
+  @@index([classId])
+  @@index([teacherId])
+  @@index([status])
+  @@index([dueAt])
+  @@map("assignments")
+}
+
+model Submission {
+  id             String           @id @default(cuid())
+  assignmentId   String           @map("assignment_id")
+  studentId      String           @map("student_id")
+  submitText     String?          @map("submit_text")
+  submitLink     String?          @map("submit_link")
+  submittedAt    DateTime?        @map("submitted_at")
+  status         SubmissionStatus @default(not_submitted)
+  isLate         Boolean          @default(false) @map("is_late")
+  returnReason   String?          @map("return_reason")
+  version        Int              @default(1)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  assignment    Assignment     @relation(fields: [assignmentId], references: [id])
+  student       Student        @relation(fields: [studentId], references: [id])
+  aiReview      AiReview?
+  teacherReview TeacherReview?
+  files         FileAsset[]
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId])
+  @@index([status])
+  @@map("submissions")
+}
+
+model AiReview {
+  id               String         @id @default(cuid())
+  submissionId     String         @unique @map("submission_id")
+  assignmentId     String         @map("assignment_id")
+  studentId        String         @map("student_id")
+  status           AiReviewStatus @default(not_started)
+  suggestedScore   Float?         @map("suggested_score")
+  suggestedComment String?        @map("suggested_comment")
+  strengths        String?
+  issues           String?
+  scoringBasis     String?        @map("scoring_basis")
+  confidence       Float?
+  errorCode        String?        @map("error_code")
+  errorMessage     String?        @map("error_message")
+  modelName        String?        @map("model_name")
+  promptVersion    String?        @map("prompt_version")
+  rawInput         Json?          @map("raw_input")
+  rawOutput        Json?          @map("raw_output")
+  startedAt        DateTime?      @map("started_at")
+  completedAt      DateTime?      @map("completed_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  submission Submission @relation(fields: [submissionId], references: [id])
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+  student    Student    @relation(fields: [studentId], references: [id])
+
+  teacherReviews TeacherReview[]
+
+  @@index([assignmentId])
+  @@index([studentId])
+  @@index([status])
+  @@map("ai_reviews")
+}
+
+model TeacherReview {
+  id               String              @id @default(cuid())
+  submissionId     String              @unique @map("submission_id")
+  assignmentId     String              @map("assignment_id")
+  studentId        String              @map("student_id")
+  teacherId        String              @map("teacher_id")
+  aiReviewId       String?             @map("ai_review_id")
+  finalScore       Float?              @map("final_score")
+  teacherComment   String?             @map("teacher_comment")
+  adoptedAiScore   Boolean             @default(false) @map("adopted_ai_score")
+  adoptedAiComment Boolean             @default(false) @map("adopted_ai_comment")
+  status           TeacherReviewStatus @default(unreviewed)
+  publishedAt      DateTime?           @map("published_at")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  submission Submission @relation(fields: [submissionId], references: [id])
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+  student    Student    @relation(fields: [studentId], references: [id])
+  teacher    Teacher    @relation(fields: [teacherId], references: [id])
+  aiReview   AiReview?  @relation(fields: [aiReviewId], references: [id])
+
+  resultPublications ResultPublication[]
+
+  @@index([assignmentId])
+  @@index([studentId])
+  @@index([teacherId])
+  @@index([status])
+  @@map("teacher_reviews")
+}
+
+model ResultPublication {
+  id              String           @id @default(cuid())
+  teacherReviewId String           @map("teacher_review_id")
+  assignmentId    String           @map("assignment_id")
+  studentId       String           @map("student_id")
+  finalScore      Float            @map("final_score")
+  teacherComment  String?          @map("teacher_comment")
+  visibility      ResultVisibility @default(student_visible)
+  publishedBy     String           @map("published_by")
+  publishedAt     DateTime         @default(now()) @map("published_at")
+  correctionReason String?         @map("correction_reason")
+
+  teacherReview TeacherReview @relation(fields: [teacherReviewId], references: [id])
+  assignment    Assignment    @relation(fields: [assignmentId], references: [id])
+  student       Student       @relation(fields: [studentId], references: [id])
+  publisher     Teacher       @relation("ResultPublishedBy", fields: [publishedBy], references: [id])
+
+  @@index([assignmentId])
+  @@index([studentId])
+  @@index([publishedBy])
+  @@map("result_publications")
+}
+
+model ExportTask {
+  id           String       @id @default(cuid())
+  assignmentId String       @map("assignment_id")
+  teacherId    String       @map("teacher_id")
+  exportFormat String       @default("xlsx") @map("export_format")
+  fields       String[]
+  status       ExportStatus @default(processing)
+  fileUrl      String?      @map("file_url")
+  errorMessage String?      @map("error_message")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  completedAt  DateTime?    @map("completed_at")
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+  teacher    Teacher    @relation(fields: [teacherId], references: [id])
+
+  @@index([assignmentId])
+  @@index([teacherId])
+  @@index([status])
+  @@map("export_tasks")
+}
+
+model FileAsset {
+  id           String    @id @default(cuid())
+  scene        FileScene
+  fileName     String    @map("file_name")
+  contentType  String    @map("content_type")
+  fileSize     Int       @map("file_size")
+  storageKey   String    @map("storage_key")
+  fileUrl      String    @map("file_url")
+  assignmentId String?   @map("assignment_id")
+  submissionId String?   @map("submission_id")
+  uploadedBy   String?   @map("uploaded_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  assignment Assignment? @relation(fields: [assignmentId], references: [id])
+  submission Submission? @relation(fields: [submissionId], references: [id])
+
+  @@index([scene])
+  @@index([assignmentId])
+  @@index([submissionId])
+  @@map("files")
+}
+
+model OperationLog {
+  id         String   @id @default(cuid())
+  actorId    String   @map("actor_id")
+  actorType  String   @map("actor_type")
+  action     String
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  detail     Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([actorId])
+  @@index([targetType, targetId])
+  @@map("operation_logs")
+}

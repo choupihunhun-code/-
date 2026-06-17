@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.pnpm-store/
+.env
+.env.local
+uploads/
+exports/
+*.log
+*.tsbuildinfo
+*.d.ts
+
+apps/api/node_modules/
+apps/api/dist/
+apps/api/.env
+apps/api/uploads/
+apps/api/exports/
