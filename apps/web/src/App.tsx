@@ -53,6 +53,14 @@ type PendingWorkItem = {
   target: Screen;
 };
 
+type TeacherMessage = {
+  title: string;
+  detail: string;
+  category: "系统" | "学生";
+  unread: boolean;
+  target?: Screen;
+};
+
 const assignments: Assignment[] = [
   { title: "课程论文：现代大学教育中的阅读与表达", course: "大学语文 2026 春 A 班", status: "批阅中", submitted: 145, total: 168, pending: 38, aiDone: 145, due: "06-20 20:00" },
   { title: "实验报告：观察与记录", course: "实验心理学 2 班", status: "批阅中", submitted: 47, total: 64, pending: 19, aiDone: 41, due: "今晚 23:00" },
@@ -124,6 +132,44 @@ const pendingWorkItems: PendingWorkItem[] = [
   },
 ];
 
+const teacherMessages: TeacherMessage[] = [
+  {
+    title: "《实验心理学》实验报告今晚 22:00 截止",
+    detail: "还有 21 名学生未提交，建议发送班级提醒。",
+    category: "系统",
+    unread: true,
+    target: "assignment-detail",
+  },
+  {
+    title: "《大学语文》课程论文新增 12 份提交",
+    detail: "AI 初评已完成，可进入批阅工作台复核。",
+    category: "系统",
+    unread: true,
+    target: "review",
+  },
+  {
+    title: "李同学已加入大学语文 2026 春 A 班",
+    detail: "通过课程邀请码加入，学号 20260018，手机号已绑定。",
+    category: "学生",
+    unread: true,
+    target: "course-detail",
+  },
+  {
+    title: "7 份作业 AI 初评失败",
+    detail: "多为附件格式异常或文本识别失败，需要教师人工处理。",
+    category: "系统",
+    unread: true,
+    target: "review",
+  },
+  {
+    title: "《专业导论》课程小论文成绩已发布",
+    detail: "86 名学生可查看最终分数和教师评语。",
+    category: "系统",
+    unread: false,
+    target: "grade-management",
+  },
+];
+
 const pathToScreen = Object.fromEntries(
   Object.entries(routeMeta).map(([screen, meta]) => [meta.path, screen]),
 ) as Record<string, Screen>;
@@ -138,9 +184,12 @@ function App() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [pendingDrawerOpen, setPendingDrawerOpen] = useState(false);
+  const [messageDrawerOpen, setMessageDrawerOpen] = useState(false);
+  const [messages, setMessages] = useState(teacherMessages);
   const [loggedIn, setLoggedIn] = useState(false);
   const current = screenMeta[screen];
   const route = routeMeta[screen];
+  const unreadCount = messages.filter((item) => item.unread).length;
   const totals = useMemo(() => ({
     pending: assignments.reduce((sum, item) => sum + item.pending, 0),
     unsubmitted: assignments.reduce((sum, item) => sum + Math.max(item.total - item.submitted, 0), 0),
@@ -181,7 +230,10 @@ function App() {
           <p>AI 初评 · 教师复核 · 成绩归档</p>
         </button>
         <div className="header-actions">
-          <button className="message-btn">消息</button>
+          <button className="message-btn" onClick={() => setMessageDrawerOpen(true)}>
+            消息
+            {unreadCount > 0 && <span>{unreadCount}</span>}
+          </button>
           <div className="relative">
             <button className={loggedIn ? "account-chip" : "login-state"} onClick={openAccount}>
               {loggedIn ? (
@@ -249,6 +301,18 @@ function App() {
           onClose={() => setPendingDrawerOpen(false)}
           go={(next) => {
             setPendingDrawerOpen(false);
+            navigate(next);
+          }}
+        />
+      )}
+
+      {messageDrawerOpen && (
+        <MessageDrawer
+          messages={messages}
+          onClose={() => setMessageDrawerOpen(false)}
+          onReadAll={() => setMessages((items) => items.map((item) => ({ ...item, unread: false })))}
+          go={(next) => {
+            setMessageDrawerOpen(false);
             navigate(next);
           }}
         />
@@ -677,6 +741,60 @@ function PendingWorkDrawer({
             进入批阅工作台
           </button>
         </footer>
+      </aside>
+    </div>
+  );
+}
+
+function MessageDrawer({
+  messages,
+  onClose,
+  onReadAll,
+  go,
+}: {
+  messages: TeacherMessage[];
+  onClose: () => void;
+  onReadAll: () => void;
+  go: (screen: Screen) => void;
+}) {
+  return (
+    <div className="drawer-backdrop" role="presentation" onClick={onClose}>
+      <aside className="drawer-panel message-drawer" role="dialog" aria-modal="true" aria-labelledby="message-center-title" onClick={(event) => event.stopPropagation()}>
+        <header className="drawer-head">
+          <div>
+            <h3 id="message-center-title">消息中心</h3>
+          </div>
+          <button className="drawer-close" onClick={onClose} aria-label="关闭消息中心">
+            <X size={16} />
+          </button>
+        </header>
+
+        <div className="message-toolbar">
+          <div className="message-tabs">
+            <button className="active">全部</button>
+            <button>系统</button>
+            <button>学生</button>
+          </div>
+          <button className="message-read-all" onClick={onReadAll}>一键已读</button>
+        </div>
+
+        <div className="message-list">
+          {messages.map((item) => (
+            <button
+              key={item.title}
+              className="message-card"
+              onClick={() => item.target && go(item.target)}
+            >
+              <div>
+                <strong>{item.title}</strong>
+                <p>{item.detail}</p>
+              </div>
+              <em className={item.unread ? "message-state unread" : "message-state read"}>
+                • {item.unread ? "未读" : "已读"}
+              </em>
+            </button>
+          ))}
+        </div>
       </aside>
     </div>
   );

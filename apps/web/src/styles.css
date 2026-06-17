@@ -56,6 +56,14 @@
     @apply min-h-[38px] rounded-[13px] border border-[#d9e0fb] bg-white px-3 text-[#15213a];
   }
 
+  .message-btn {
+    @apply relative font-semibold;
+  }
+
+  .message-btn span {
+    @apply absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-[#1687ff] px-1 text-xs font-extrabold text-white ring-2 ring-white;
+  }
+
   .login-state {
     @apply inline-flex items-center gap-2 pl-1;
   }
@@ -154,6 +162,58 @@
 
   .drawer-foot {
     @apply mt-auto flex items-center justify-end gap-3 border-t border-[#edf0fb] bg-white px-5 py-4;
+  }
+
+  .message-drawer {
+    @apply w-[min(470px,calc(100vw-24px))];
+  }
+
+  .message-toolbar {
+    @apply flex items-center justify-between gap-3 px-4 py-4;
+  }
+
+  .message-tabs {
+    @apply flex items-center gap-2;
+  }
+
+  .message-tabs button {
+    @apply h-9 rounded-xl bg-transparent px-3 text-sm font-bold text-[#64748b];
+  }
+
+  .message-tabs button.active {
+    @apply bg-[#f3f5ff] text-[#5b55ff];
+  }
+
+  .message-read-all {
+    @apply bg-transparent text-sm font-bold text-[#635bff];
+  }
+
+  .message-list {
+    @apply grid gap-3 overflow-y-auto px-4 pb-4;
+  }
+
+  .message-card {
+    @apply grid min-h-[76px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[15px] border border-[#e6eafe] bg-white px-4 py-3 text-left;
+  }
+
+  .message-card strong {
+    @apply block text-sm leading-snug text-[#15213a];
+  }
+
+  .message-card p {
+    @apply m-0 mt-2 text-[13px] leading-5 text-[#73809a];
+  }
+
+  .message-state {
+    @apply inline-flex min-h-6 items-center rounded-full px-2.5 text-xs font-bold not-italic;
+  }
+
+  .message-state.unread {
+    @apply bg-[#fff7e8] text-[#e87905];
+  }
+
+  .message-state.read {
+    @apply bg-[#eef0ff] text-[#635bff];
   }
 
   .login-modal {
