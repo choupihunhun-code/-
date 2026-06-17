@@ -162,10 +162,6 @@ function App() {
               <h2>{current.title}</h2>
               <p>{current.desc}</p>
             </div>
-            <button className="outline-action" onClick={openAccount}>
-              <UserRound size={15} />
-              {loggedIn ? "账号资料" : "登录查看资料"}
-            </button>
           </div>
 
           {screen === "dashboard" && <DashboardScreen totals={totals} go={setScreen} />}
