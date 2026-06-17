@@ -93,7 +93,7 @@
   }
 
   .login-modal {
-    @apply max-h-[86vh] w-[min(460px,calc(100vw-28px))] overflow-y-auto rounded-2xl bg-white shadow-[0_28px_80px_rgba(15,23,42,0.35)];
+    @apply flex max-h-[86vh] w-[min(460px,calc(100vw-28px))] flex-col overflow-hidden rounded-2xl bg-white shadow-[0_28px_80px_rgba(15,23,42,0.35)];
   }
 
   .login-modal-head {
@@ -125,7 +125,7 @@
   }
 
   .login-form {
-    @apply grid gap-3 px-6 py-4;
+    @apply grid min-h-0 flex-1 gap-3 overflow-y-auto px-6 py-4;
   }
 
   .login-form label {
@@ -154,7 +154,7 @@
   }
 
   .login-modal-foot {
-    @apply px-6 pb-6 pt-2;
+    @apply shrink-0 border-t border-[#eef1fb] bg-white px-6 pb-6 pt-4;
   }
 
   .workspace {
